@@ -3,6 +3,10 @@ package clock;
 import java.awt.event.*;
 import javax.swing.Timer;
 
+/**
+ *
+ * @author LUCIE
+ */
 public class Controller {
     
     ActionListener listener;
@@ -11,6 +15,11 @@ public class Controller {
     Model model;
     View view;
     
+    /**
+     *
+     * @param m
+     * @param v
+     */
     public Controller(Model m, View v) {
         model = m;
         view = v;
@@ -23,5 +32,8 @@ public class Controller {
         
         timer = new Timer(100, listener);
         timer.start();
+        
+     
+        
     }
 }

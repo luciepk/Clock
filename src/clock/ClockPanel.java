@@ -6,10 +6,18 @@ import java.awt.geom.*;
 import java.awt.font.*;
 import javax.swing.*;
 
+/**
+ *
+ * @author LUCIE
+ */
 public class ClockPanel extends JPanel {
     
     Model model;
     
+    /**
+     *
+     * @param m
+     */
     public ClockPanel(Model m) {
         model = m;
         setPreferredSize(new Dimension(200, 200));
