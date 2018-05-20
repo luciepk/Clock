@@ -88,7 +88,7 @@ public class View implements Observer {
 
         //to save an alarm
         JButton jButton1 = new JButton();
-        jButton1.setText("Set Alaram");
+        jButton1.setText("Set Alarm");
         jPanel1.add(jButton1);
 
         class jButton1Listener implements ActionListener {
