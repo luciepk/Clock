@@ -14,6 +14,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import queuemanager.QueueUnderflowException;
 
 /**
  *
@@ -23,27 +24,14 @@ public class View implements Observer {
 
     ClockPanel panel;
 
-    /**
-     *
-     * @param model
-     */
     public View(Model model) {
 
-        final SortedArrayPriorityQueue arrayAlarm = model.getArray();
         JFrame frame = new JFrame();
         panel = new ClockPanel(model);
-        //frame.setContentPane(panel);
+
         frame.setTitle("Java Clock");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Start of border layout code
-        // I've just put a single button in each of the border positions:
-        // PAGE_START (i.e. top), PAGE_END (bottom), LINE_START (left) and
-        // LINE_END (right). You can omit any of these, or replace the button
-        // with something else like a label or a menu bar. Or maybe you can
-        // figure out how to pack more than one thing into one of those
-        // positions. This is the very simplest border layout possible, just
-        // to help you get started.
         Container pane = frame.getContentPane();
 
         JButton button = new JButton("Button 1 (PAGE_START)");
@@ -53,15 +41,15 @@ public class View implements Observer {
         pane.add(panel, BorderLayout.CENTER);
 
         // creation of the update about the alarm
-        JPanel jPanel2 = new JPanel();
+        final JPanel jPanel2 = new JPanel();
 
         JLabel jLabel4 = new JLabel();
         jLabel4.setText("Next Alarm: ");
         jPanel2.add(jLabel4);
 
-        final JLabel jLabel5 = new JLabel();
-        jLabel5.setText("Alarm Not Set");
-        jPanel2.add(jLabel5);
+        final JLabel nextAlarm = new JLabel();
+        nextAlarm.setText("Alarm Not Set");
+        jPanel2.add(nextAlarm);
 
         pane.add(jPanel2, BorderLayout.LINE_START);
 
@@ -72,19 +60,19 @@ public class View implements Observer {
         jLabel1.setText("Set Alaram:");
         jPanel1.add(jLabel1);
 
-        JLabel jLabel2 = new JLabel();
-        jLabel2.setText("HH:");
-        jPanel1.add(jLabel2);
+        final JLabel hours = new JLabel();
+        hours.setText("HH:");
+        jPanel1.add(hours);
 
-        final JTextField jTextField1 = new JTextField(2);
-        jPanel1.add(jTextField1);
+        final JTextField hh = new JTextField(2);
+        jPanel1.add(hh);
 
-        JLabel jLabel3 = new JLabel();
-        jLabel3.setText("MM:");
-        jPanel1.add(jLabel3);
+        final JLabel minutes = new JLabel();
+        minutes.setText("MM:");
+        jPanel1.add(minutes);
 
-        final JTextField jTextField2 = new JTextField(2);
-        jPanel1.add(jTextField2);
+        final JTextField min = new JTextField(2);
+        jPanel1.add(min);
 
         //to save an alarm
         JButton jButton1 = new JButton();
@@ -94,28 +82,26 @@ public class View implements Observer {
         class jButton1Listener implements ActionListener {
 
             public void actionPerformed(ActionEvent event) {
+                String result = " ";
+                // add an alarm
+                int hour = Integer.parseInt(hh.getText());
+                int minute = Integer.parseInt(min.getText());
+                AlarmClock.addAlarm(hour, minute);
 
-                //put the new alarm in the array
-                
-                int hh = Integer.parseInt(jTextField1.getText());
-                int mm = Integer.parseInt(jTextField2.getText());
-                Alarm alarm = new Alarm(hh, mm);
-                int priority = hh * 60 + mm;
-                try {
-                    arrayAlarm.add(alarm, priority);
-                } catch (QueueOverflowException e) {
-                    System.out.println("Add operation failed: " + e);
-                }
                 //put the field to nothing
-                jTextField1.setText("");
-                jTextField2.setText("");
-                try {
-                    //update the status of the next alarm
-                    jLabel5.setText(arrayAlarm.head().toString());
-                } catch (QueueUnderflowException ex) {
-                    Logger.getLogger(View.class.getName()).log(Level.SEVERE, null, ex);
-                }
-          
+                hh.setText("");
+                min.setText("");
+
+                //update the status of the next alarm
+                // get the head in miliseconds
+                Long[] priorityArray = AlarmClock.getPriorityArray();
+                long dateInMilliseconds = priorityArray[0];
+                //put the millisecond in hour and minute
+                int hours = AlarmClock.millisecondsToHours(dateInMilliseconds);
+                int minutes = AlarmClock.millisecondsToMinutes(dateInMilliseconds);
+                // create the string to update
+                result = " " + hours + ":" + minutes;
+                nextAlarm.setText(result);
 
             }
         }
@@ -155,12 +141,81 @@ public class View implements Observer {
         class ListAlarmListener implements ActionListener {
 
             public void actionPerformed(ActionEvent event) {
-                 if (arrayAlarm.isEmpty()==true){
-                 JOptionPane.showMessageDialog(panel, "No alarm created");
-                 }
-                 else{
-                String showInputDialog = JOptionPane.showInputDialog(null, arrayAlarm.toString() + "Which alarm do you want to change", "1326");
-                 }
+                SpinnerNumberModel modelHours = new SpinnerNumberModel(0, 0, 23, 1);
+                SpinnerNumberModel modelMinutes = new SpinnerNumberModel(0, 0, 59, 1);
+
+                final Long[] priorityArray = AlarmClock.getPriorityArray();
+                String[] labels = new String[priorityArray.length];
+
+                // create and add labels to the labels array
+                for (int i = 0; i < priorityArray.length; i++) {
+                    long dateInMilliseconds = priorityArray[i];
+                    int hour = AlarmClock.millisecondsToHours(dateInMilliseconds);
+                    int minute = AlarmClock.millisecondsToMinutes(dateInMilliseconds);
+
+                    String label = String.format("%02d:%02d", hour, minute);
+                    labels[i] = label;
+                }
+
+                final JComboBox alarmList = new JComboBox(labels);
+                final JSpinner hours = new JSpinner(modelHours);
+                final JSpinner minutes = new JSpinner(modelMinutes);
+
+                // action listener to input hours and minutes of selected alarm to JSpinner fields
+                class alarmListListener implements ActionListener {
+
+                    public void actionPerformed(ActionEvent event) {
+
+                        int position = alarmList.getSelectedIndex();
+                        long dateInMilliseconds = priorityArray[position];
+                        int hour = AlarmClock.millisecondsToHours(dateInMilliseconds);
+                        int minute = AlarmClock.millisecondsToMinutes(dateInMilliseconds);
+
+                        hours.setValue(hour);
+                        minutes.setValue(minute);
+                    }
+                
+                }
+
+                if (!AlarmClock.isEmpty()) {
+                    alarmList.setSelectedIndex(0); // runs the event listener for the first item
+                }
+
+                // custom names of the buttons
+                Object[] options = {"Delete",
+                    "Edit",
+                    "Cancel"};
+
+                final JComponent[] inputs = new JComponent[]{
+                    new JLabel("Select Alarm"),
+                    alarmList,
+                    new JLabel("Hours"),
+                    hours,
+                    new JLabel("Minutes"),
+                    minutes
+                };
+
+                int result = JOptionPane.showOptionDialog(null, inputs, "Edit Alarm",
+                        JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, 0);
+
+                if (result == JOptionPane.YES_OPTION) { try {
+                    // deletes the alarm when user clicks on Delete button
+                    AlarmClock.removeChoose(alarmList.getSelectedIndex());
+                    } catch (QueueUnderflowException ex) {
+                        Logger.getLogger(View.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                } else if (result == JOptionPane.NO_OPTION) { try {
+                    // edits the alarm when user clicks on Edit button
+                    AlarmClock.removeChoose(alarmList.getSelectedIndex()); // removes the chosen alarm
+                    } catch (QueueUnderflowException ex) {
+                        Logger.getLogger(View.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                    int hour = (int) hours.getValue();
+                    int minute = (int) minutes.getValue();
+
+                    AlarmClock.addAlarm(hour, minute); // adds a new edited alarm
+                }
             }
         }
         listAlarm.addActionListener(new ListAlarmListener());
@@ -170,11 +225,11 @@ public class View implements Observer {
         frame.setVisible(true);
     }
 // activate the alarm with a pop up comming to say wake up
-    
+
     // when the update happen check if it's time for the alarm 
     public void update(Observable o, Object arg) {
         panel.repaint();
-        
+
     }
 
 }

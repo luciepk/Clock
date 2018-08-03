@@ -179,7 +179,7 @@ class AlarmClock {
 
  
     static int millisecondsToHours(long dateInMilliseconds) {
-        int hours = (int) (dateInMilliseconds / (1000 * 60 * 60)) % 24 + 1;// put it in hour
+        int hours = (int) (dateInMilliseconds / (1000 * 60 * 60)) % 24 + 2 ;// put it in hour
 
         return (hours == 24) ? 0 : hours;
     }

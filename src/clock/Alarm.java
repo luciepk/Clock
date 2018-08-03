@@ -11,44 +11,18 @@ package clock;
  */
 public class Alarm {
     
-    /**
-     *an integer to stock the hour of the alarm
-     */
-    protected int hour;
+  private long dateInMilliseconds;
 
-    /**
-     *an integer to stock the second of the alarm
-     */
-    protected int min;
-    
-    /**
-     *cnstructor of the alarm
-     * @param hour
-     * @param min
-     */
-    public Alarm(int hour,int min) {
-        this.hour = hour;
-        this.min = min;
+    public Alarm(long dateInMilliseconds) {
+        this.dateInMilliseconds = dateInMilliseconds;
     }
 
-    /**
-     *to get the hour 
-     * @return
-     */
-    public int getHour() {
-        return hour;
+    public long getDateInMilliseconds() {
+        return dateInMilliseconds;
     }
-    
-    /**
-     *to get the minute
-     * @return
-     */
-    public int getMin() {
-        return min;
-    }
-    
+
     @Override
     public String toString() {
-        return getHour()+":"+getMin();
+        return String.valueOf(getDateInMilliseconds());
     }
 }
